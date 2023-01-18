@@ -5,6 +5,7 @@ import cv2
 import re
 import os
 import numpy as np
+import pandas as pd
 
 '''-------------GENERATE THE PLATES------------'''
 
@@ -68,12 +69,24 @@ def create_plates(N):
         d_sign = d_sign.resize((int(ratio * H), H), Image.Resampling.LANCZOS)
         img = concat_images_horiz(d_sign, img)
 
+        # create mask
+        mask = img
+        mask.paste((255, 255, 255), [0, 0, mask.size[0], mask.size[1]])
+
         # Add black border to the obtained license plate
         img = ImageOps.expand(img, border=2, fill='black')
 
         # Rotate and pad the license plate by random padding with random background
         background = random_color()
-        img = img.rotate(random.randint(-45, 45), expand=True, fillcolor=background)
-        img = ImageOps.expand(img, border=random.randint(5, 30), fill=background)
+        rotate_angle = random.randint(-45, 45)
+        border = random.randint(5, 30)
+        img = img.rotate(rotate_angle, expand=True, fillcolor=background)
+        img = ImageOps.expand(img, border=border, fill=background)
+        mask = mask.rotate(rotate_angle, expand=True, fillcolor='black')
+        mask = ImageOps.expand(mask, border=border, fill='black')
 
         img.save("plates/" + re.sub(r"[\n\t\s]*", "", text) + ".png")
+        mask.save("masks/" + re.sub(r"[\n\t\s]*", "", text) + ".png")
+
+
+create_plates(10000)
