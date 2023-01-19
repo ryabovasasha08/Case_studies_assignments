@@ -6,7 +6,7 @@ import numpy as np
 from skimage.feature import hog
 
 
-def load_chars_dict_from_folder(folder):
+def load_images_dict_from_folder(folder):
     chars_dict = {}
     for filename in os.listdir(folder):
         img = cv2.imread(os.path.join(folder, filename), cv2.IMREAD_GRAYSCALE).astype(np.float32)
@@ -17,7 +17,7 @@ def load_chars_dict_from_folder(folder):
 
 model = KNeighborsClassifier(n_neighbors=3)
 
-chars_dict = load_chars_dict_from_folder("characters")
+chars_dict = load_images_dict_from_folder("characters")
 features = [hog(img) for img in chars_dict.values()]
 
 labels = list(chars_dict.keys())
