@@ -45,6 +45,12 @@ def random_plate_number(multiline):
 
 
 def create_plates(N):
+    if os.path.exists("plates") is False:
+        os.mkdir("plates")
+
+    if os.path.exists("masks") is False:
+        os.mkdir("masks")
+
     for i in range(0, N):
         is_multiline = random.randint(0, 1)
         H = 50
@@ -77,17 +83,14 @@ def create_plates(N):
 
         # Rotate and pad the license plate by random padding with random background but output images have same size
         background = random_color()
-        rotate_angle = random.randint(-45, 45)
-        border = 100 - random.randint(5, 30)
+        rotate_angle = random.randint(-30, 30)
+        border = random.randint(1, 15)
         img = img.rotate(rotate_angle, expand=True, fillcolor=background)
         img = ImageOps.expand(img, border=border, fill=background)
-        img = img.resize((150,150))
+        img = img.resize((160, 80))
         mask = mask.rotate(rotate_angle, expand=True, fillcolor='black')
         mask = ImageOps.expand(mask, border=border, fill='black')
-        mask = mask.resize((150,150))
+        mask = mask.resize((160, 80))
 
         img.save("plates/" + re.sub(r"[\n\t\s]*", "", text) + ".png")
         mask.save("masks/" + re.sub(r"[\n\t\s]*", "", text) + ".png")
-
-
-create_plates(10000)

@@ -4,40 +4,51 @@ import random
 import os
 
 
-if os.path.exists("characters") is False:
-    os.mkdir("characters")
+def generate_characters(num_samples_per_character):
+    if os.path.exists("characters") is False:
+        os.mkdir("characters")
 
+    for num in range(0, 9):
+        for i in range(num_samples_per_character):
+            img = Image.new('RGB', (15, 20), color=(255, 255, 255))
+            d = ImageDraw.Draw(img)
 
-for num in range(0,10):
+            fontsize = random.randint(10,20)
+            font = ImageFont.truetype("EuroPlate.ttf",fontsize)
 
-    for i in range(1000):
-        img = Image.new('RGB',(17,17), color = (255,255,255))      
+            d.text((0, 0), str(num), font=font, fill=(0, 0, 0), align="center")
+            img = img.rotate(random.randint(-10, 10), expand=True, fillcolor=(255, 255, 255))
+            img = img.resize((15, 20))
+
+            name = str(num) + "_" + str(i) + ".png"
+            img.save("characters/" + name)
+
+    for i in range(num_samples_per_character):
+        img = Image.new('RGB', (15, 20), color=(255, 255, 255))
         d = ImageDraw.Draw(img)
 
-        fontsize = random.randint(10,20)
-        font = ImageFont.truetype("EuroPlate.ttf",fontsize)
+        fontsize = 20
+        font = ImageFont.truetype("EuroPlate.ttf", fontsize)
 
-        d.text((0,0), str(num) , font=font, fill=(0, 0, 0), align="center")
-        img = img.rotate(random.randint(-45, 45), expand=True, fillcolor=(255,255,255))
-        img = img.resize((20,20))
+        d.text((0, 0), "-", font=font, fill=(0, 0, 0), align="center")
+        img = img.rotate(random.randint(-10, 10), expand=True, fillcolor=(255, 255, 255))
+        img = img.resize((15, 20))
 
-        name = str(num) + "_" + str(i) + ".png"
-        img.save("characters/"+name)
-        
+        name = "a" + "_" + str(i) + ".png"
+        img.save("characters/" + name)
 
-for let in string.ascii_uppercase:
+    for let in string.ascii_uppercase:
 
-    for i in range(1000):
-        img = Image.new('RGB',(17,17), color = (255,255,255))
-        d = ImageDraw.Draw(img)
+        for i in range(num_samples_per_character):
+            img = Image.new('RGB', (15, 10), color=(255, 255, 255))
+            d = ImageDraw.Draw(img)
 
-        fontsize = random.randint(10,20)
-        font = ImageFont.truetype("EuroPlate.ttf",fontsize)
+            fontsize = 20
+            font = ImageFont.truetype("EuroPlate.ttf", fontsize)
 
-        d.text((0,0), let , font=font, fill=(0, 0, 0), align="center")
-        img = img.rotate(random.randint(-45, 45), expand=True, fillcolor=(255,255,255))
-        img = img.resize((20,20))
+            d.text((0, 0), let, font=font, fill=(0, 0, 0), align="center")
+            img = img.rotate(random.randint(-10, 10), expand=True, fillcolor=(255, 255, 255))
+            img = img.resize((15, 20))
 
-        name = let + "_" + str(i) + ".png"
-        img.save("characters/"+name)
-
+            name = let + "_" + str(i) + ".png"
+            img.save("characters/" + name)

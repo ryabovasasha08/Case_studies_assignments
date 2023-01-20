@@ -12,6 +12,11 @@ import cv2
 import re
 import os
 import numpy as np
+from matplotlib import cm
+
+from character import generate_characters
+from plates_generate import create_plates
+from train_model_characters import create_and_train_model, convert_to_text
 
 '''--------------READ THE PLATES----------------'''
 
@@ -37,8 +42,9 @@ def split_in_two_lines(rects, deviation):
 
         point1 = get_center(line_1_rects[0])
         point2 = get_center(line_1_rects[1])
+        eps = 10 ^ (-5)
 
-        line_1_m = (point2[1] - point1[1]) / (point2[0] - point1[0])
+        line_1_m = (point2[1] - point1[1]) / (point2[0] - point1[0] + eps)
         line_1_b = point1[1] - (line_1_m * point1[0])
         line_2_m = 0
         line_2_b = 0
@@ -75,12 +81,45 @@ def split_in_two_lines(rects, deviation):
                 return line_2_rects, line_1_rects
 
 
-def detect_lp(image):
+def get_box_points(x, y, w, h, alpha):
+    return cv2.boxPoints(((x, y), (w, h), alpha))
+
+
+# Get a segment of size (15, 20) - the same size as characters in database
+def get_square_segment(x, y, w, h, alpha, size, gray, i):
+    # the order of the box points: bottom left, top left, top right, bottom right
+    box = get_box_points(x, y, w, h, alpha)
+    box = np.int0(box)
+    src_pts = box.astype("float32")
+    # coordinate of the points in box points after the rectangle has been straightened
+    dst_pts = np.array([[0, h - 1], [0, 0], [w - 1, 0], [w - 1, h - 1]], dtype="float32")
+    # the perspective transformation matrix
+    M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+    # directly warp the rotated rectangle to get the straightened rectangle
+    warped = cv2.warpPerspective(gray, M, (int(w), int(h)))
+    warped = Image.fromarray(warped, mode="L")
+    warped = warped.resize((size - 5, size))
+    warped = np.array(warped)
+
+    # cv2.imshow("warped"+str(i), warped)
+    # cv2.waitKey(0)
+
+    otsu_threshold, output = cv2.threshold(np.uint8(warped), 0, 255, cv2.THRESH_OTSU)
+    output = output
+    return output
+
+
+def detect_lp(image, model, text):
     '''Convert to grayscale'''
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     '''Use Otsu's threshold to clean the image and only leave important - works like a charm'''
-    otsu_threshold, gray = cv2.threshold(np.uint8(gray), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    otsu_threshold, gray = cv2.threshold(np.uint8(gray), 0, 255, cv2.THRESH_OTSU)
+
+    # Try dilation-erosion to make bigger whitespaces between letters - didn't work
+    # kernel = np.ones((2, 2), np.uint8)
+    # Using cv2.dilate() method
+    # gray = cv2.dilate(gray, kernel)
 
     # Tried dilation+erosion to get rid of white D letter, but not worked since it noises up the plate text too.
 
@@ -92,19 +131,21 @@ def detect_lp(image):
     bounding_rects = []
     for cnt in contours:
         # Get rectangle bounding contour
-        [x, y, w, h] = cv2.boundingRect(cnt)
+        (x, y), (w, h), alpha = cv2.minAreaRect(cnt)
+
         # Don't plot small false positives that aren't license plates
-        if w > 35 or h > 35 or w < 10 or y < 10:
+        if w > 40 or h > 40 or w < 8 or y < 8:
             continue
-        bounding_rects.append([x, y, w, h])
+        bounding_rects.append([x, y, w, h, alpha])
 
     '''Removing letter D as the most left rectangle and all the defined rectangles that overlap with it'''
     most_left_rect = min(bounding_rects, key=lambda t: t[0])
     bounding_rects.remove(most_left_rect)
-    chosen_x1, chosen_y1, chosen_w, chosen_h = most_left_rect
+    chosen_x1, chosen_y1, chosen_w, chosen_h, chosen_alpha = most_left_rect
+    # Fix the wrong formula (now rects are rotated, so formula for x2, y2 is wrong)
     chosen_x2, chosen_y2 = chosen_x1 + chosen_w, chosen_y1 + chosen_h
     for rect in bounding_rects:
-        x1, y1, w, h = rect
+        x1, y1, w, h, alpha = rect
         x2, y2 = x1 + w, y1 + h
         if (x1 < chosen_x2 and x2 > chosen_x1 and
                 y1 < chosen_y2 and y2 > chosen_y1):
@@ -140,26 +181,41 @@ def detect_lp(image):
         first_line.extend(second_line)
         bounding_rects = first_line
 
-    '''HERE TAKE SEQUENCE BOUNDING_RECTS AND RECOGNIZE SYMBOLS FROM IT - TBD'''
+    ''' Convert all the segments in the separate images of the correct size (15*20 - same as chars in database)'''
+    img_list = [get_square_segment(x, y, w, h, alpha, 20, gray, i) for i, [x, y, w, h, alpha] in
+                enumerate(bounding_rects)]
+    predicted_text = convert_to_text(model, img_list)
 
-    # Draw the rectangles around the characters in license plate
-    for [x, y, w, h] in bounding_rects:
-        cv2.rectangle(gray, (x, y), (x + w, y + h), (150, 150, 150), 1)
+    '''If the bounding rectangle is too wide and short- it is probably a dash'''
+    for i, [x, y, w, h, alpha] in enumerate(bounding_rects):
+        if w > h * 2:
+            predicted_text[i] = "-"
 
-    return bounding_rects
+    print("Real text: ", text)
+    print("Predicted text: ", predicted_text)
+
+    '''Draw the rectangles around the characters in license plate'''
+    for [x, y, w, h, alpha] in bounding_rects:
+        box = get_box_points(x, y, w, h, alpha)
+        box = np.int0(box)
+        cv2.drawContours(gray, [box], 0, (150, 150, 150), 1)
+
+    return gray
 
 
 # Number of plates (right now in 'plates' folder there's 7k images
-N = 7000
-# create_plates(N) # to generate a folder 'plates' with N images
+N = 100
+#generate_characters(1000)
+# create_plates(N)  # to generate a folder 'plates' with N images and masks with N images
+model = create_and_train_model()
 
 images_dict = load_images_dict_from_folder("plates")
 images = list(images_dict.values())
 images_platenames = list(images_dict.keys())
+
 for i, image in enumerate(images):
-    cv2.imshow(images_platenames[i], detect_lp(image))
+    cv2.imshow(images_platenames[i], detect_lp(image, model, images_platenames[i]))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-    if i > 30:
+    if i > 10:
         break
