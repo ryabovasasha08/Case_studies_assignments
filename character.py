@@ -13,7 +13,7 @@ def generate_characters(num_samples_per_character):
             img = Image.new('RGB', (15, 20), color=(255, 255, 255))
             d = ImageDraw.Draw(img)
 
-            fontsize = random.randint(10,20)
+            fontsize = 20
             font = ImageFont.truetype("EuroPlate.ttf",fontsize)
 
             d.text((0, 0), str(num), font=font, fill=(0, 0, 0), align="center")

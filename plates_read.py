@@ -98,6 +98,7 @@ def get_square_segment(x, y, w, h, alpha, size, gray, i):
     # directly warp the rotated rectangle to get the straightened rectangle
     warped = cv2.warpPerspective(gray, M, (int(w), int(h)))
     warped = Image.fromarray(warped, mode="L")
+    warped = ImageOps.expand(warped, border=5, fill='white')
     warped = warped.resize((size - 5, size))
     warped = np.array(warped)
 
@@ -205,7 +206,7 @@ def detect_lp(image, model, text):
 
 # Number of plates (right now in 'plates' folder there's 7k images
 N = 100
-#generate_characters(1000)
+# generate_characters(1000)
 # create_plates(N)  # to generate a folder 'plates' with N images and masks with N images
 model = create_and_train_model()
 
