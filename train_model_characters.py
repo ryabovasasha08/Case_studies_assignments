@@ -26,7 +26,8 @@ def create_and_train_model():
     chars_dict = load_images_dict_from_folder("characters")
     chars_dict_values = np.reshape(list(chars_dict.values()), (len(chars_dict), 15, 20))
 
-    features = [extract_features(img) for img in chars_dict_values]
+    # Try pixel values as features instead of hog (results haven't improved)
+    features = np.reshape(list(chars_dict.values()), (len(chars_dict), 15*20)) #[extract_features(img) for img in chars_dict_values]
 
     labels_keys = list(chars_dict.keys())
     labels = []
@@ -44,5 +45,6 @@ def create_and_train_model():
 
 def convert_to_text(model, img_list):
     img_list = np.reshape(img_list, (len(img_list), 15, 20))
-    test_features = [extract_features(img) for img in img_list]
+    # Try pixel values as features instead of hog (results haven't improved)
+    test_features = np.reshape(img_list, (len(img_list), 15*20)) # [extract_features(img) for img in img_list]
     return model.predict(test_features)

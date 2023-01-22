@@ -128,6 +128,7 @@ def detect_lp(image, model, text):
     # gray = cv2.Canny(np.uint8(gray), 50, 150)
 
     '''Find contours in the image'''
+    # cv2.findContours finds arbitrary template in the grayscale image using Generalized Hough Transform
     contours, _ = cv2.findContours(gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     bounding_rects = []
     for cnt in contours:
