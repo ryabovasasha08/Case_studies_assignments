@@ -14,21 +14,12 @@ import os
 import numpy as np
 from matplotlib import cm
 
-from character import generate_characters
-from plates_generate import create_plates
-from train_model_characters import create_and_train_model, convert_to_text
+from generate.characters_generate import generate_characters
+from generate.plates_generate import create_plates
+from read_classic.train_model_characters import create_and_train_model, convert_to_text
+from utils import load_images_dict_from_folder
 
 '''--------------READ THE PLATES----------------'''
-
-
-def load_images_dict_from_folder(folder):
-    images_dict = {}
-    for filename in os.listdir(folder):
-        img = cv2.imread(os.path.join(folder, filename)).astype(np.float32)
-        if img is not None:
-            images_dict[filename] = img
-    return images_dict
-
 
 def get_center(rect):
     return (rect[0] + rect[2] / 2, rect[1] + rect[3] / 2)
@@ -211,7 +202,7 @@ N = 100
 # create_plates(N)  # to generate a folder 'plates' with N images and masks with N images
 model = create_and_train_model()
 
-images_dict = load_images_dict_from_folder("plates")
+images_dict = load_images_dict_from_folder("database/plates")
 images = list(images_dict.values())
 images_platenames = list(images_dict.keys())
 

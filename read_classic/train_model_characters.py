@@ -10,20 +10,10 @@ def extract_features(img):
     return hog(img, orientations=9, pixels_per_cell=(6, 6), cells_per_block=(2, 2), visualize=False,
                feature_vector=True)
 
-
-def load_images_dict_from_folder(folder):
-    chars_dict = {}
-    for filename in os.listdir(folder):
-        img = cv2.imread(os.path.join(folder, filename), cv2.IMREAD_GRAYSCALE).astype(np.float32)
-        if img is not None:
-            chars_dict[filename] = img
-    return chars_dict
-
-
 def create_and_train_model():
     model = KNeighborsClassifier(n_neighbors=3)
 
-    chars_dict = load_images_dict_from_folder("characters")
+    chars_dict = load_images_dict_from_folder("database/characters")
     chars_dict_values = np.reshape(list(chars_dict.values()), (len(chars_dict), 15, 20))
 
     # Try pixel values as features instead of hog (results haven't improved)
