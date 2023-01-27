@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
 from generate.plates_generate import create_plates
-from utils import load_images_dict_from_folder
 import cv2
 from keras.layers import Conv2D, Dropout, Conv2DTranspose, concatenate, Input, Rescaling, MaxPooling2D
 from keras import Model
@@ -10,10 +9,10 @@ IMG_SIZE = 256
 
 def build_unet_model(img_size):
     # input layer shape is equal to patch image size
-    inputs = Input(shape=(img_size, img_size, 1))
+    inputs = Input(shape=(img_size, img_size, 3))
 
     # rescale images from (0, 255) to (0, 1)
-    rescale = Rescaling(scale=1. / 255, input_shape=(img_size, img_size, 1))(inputs)
+    rescale = Rescaling(scale=1. / 255, input_shape=(img_size, img_size, 3))(inputs)
     previous_block_activation = rescale  # Set aside residual
 
     contraction = {}
@@ -42,6 +41,6 @@ def build_unet_model(img_size):
         x = Conv2D(f, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(x)
         previous_block_activation = x
 
-    outputs = Conv2D(filters=1, kernel_size=(1, 1), activation="softmax")(previous_block_activation)
+    outputs = Conv2D(3, 1, padding="same", activation="softmax")(previous_block_activation)
 
     return Model(inputs=inputs, outputs=outputs)

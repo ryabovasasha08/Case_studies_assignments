@@ -4,6 +4,7 @@ import cv2
 import os
 import numpy as np
 from skimage.feature import hog
+from utils import load_bw_images_dict_from_folder
 
 
 def extract_features(img):
@@ -13,7 +14,7 @@ def extract_features(img):
 def create_and_train_model():
     model = KNeighborsClassifier(n_neighbors=3)
 
-    chars_dict = load_images_dict_from_folder("database/characters")
+    chars_dict = load_bw_images_dict_from_folder("database/characters")
     chars_dict_values = np.reshape(list(chars_dict.values()), (len(chars_dict), 15, 20))
 
     # Try pixel values as features instead of hog (results haven't improved)

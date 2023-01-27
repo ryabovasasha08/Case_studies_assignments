@@ -17,7 +17,7 @@ from matplotlib import cm
 from generate.characters_generate import generate_characters
 from generate.plates_generate import create_plates
 from read_classic.train_model_characters import create_and_train_model, convert_to_text
-from utils import load_images_dict_from_folder
+from utils import load_bw_images_dict_from_folder
 
 '''--------------READ THE PLATES----------------'''
 
@@ -101,12 +101,7 @@ def get_square_segment(x, y, w, h, alpha, size, gray, i):
     return output
 
 
-def detect_lp(image, model, text):
-    '''Convert to grayscale'''
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    '''Use Otsu's threshold to clean the image and only leave important - works like a charm'''
-    otsu_threshold, gray = cv2.threshold(np.uint8(gray), 0, 255, cv2.THRESH_OTSU)
+def detect_lp(gray, model, text):
 
     # Try dilation-erosion to make bigger whitespaces between letters - didn't work
     # kernel = np.ones((2, 2), np.uint8)
@@ -198,11 +193,11 @@ def detect_lp(image, model, text):
 
 # Number of plates (right now in 'plates' folder there's 7k images
 N = 100
-# generate_characters(1000)
+# generate_characters(100)
 # create_plates(N)  # to generate a folder 'plates' with N images and masks with N images
 model = create_and_train_model()
 
-images_dict = load_images_dict_from_folder("database/plates")
+images_dict = load_bw_images_dict_from_folder("database/plates")
 images = list(images_dict.values())
 images_platenames = list(images_dict.keys())
 
