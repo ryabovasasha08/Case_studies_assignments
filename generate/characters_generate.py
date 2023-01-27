@@ -14,7 +14,7 @@ def generate_characters(num_samples_per_character):
             d = ImageDraw.Draw(img)
 
             fontsize = 20
-            font = ImageFont.truetype("EuroPlate.ttf",fontsize)
+            font = ImageFont.truetype("generate/EuroPlate.ttf",fontsize)
 
             d.text((0, 0), str(num), font=font, fill=(0, 0, 0), align="center")
             img = img.rotate(random.randint(-10, 10), expand=True, fillcolor=(255, 255, 255))
@@ -28,7 +28,7 @@ def generate_characters(num_samples_per_character):
         d = ImageDraw.Draw(img)
 
         fontsize = 20
-        font = ImageFont.truetype("EuroPlate.ttf", fontsize)
+        font = ImageFont.truetype("generate/EuroPlate.ttf", fontsize)
 
         d.text((0, 0), "-", font=font, fill=(0, 0, 0), align="center")
         img = img.rotate(random.randint(-10, 10), expand=True, fillcolor=(255, 255, 255))
@@ -44,7 +44,7 @@ def generate_characters(num_samples_per_character):
             d = ImageDraw.Draw(img)
 
             fontsize = 20
-            font = ImageFont.truetype("EuroPlate.ttf", fontsize)
+            font = ImageFont.truetype("generate/EuroPlate.ttf", fontsize)
 
             d.text((0, 0), let, font=font, fill=(0, 0, 0), align="center")
             img = img.rotate(random.randint(-10, 10), expand=True, fillcolor=(255, 255, 255))
