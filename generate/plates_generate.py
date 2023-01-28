@@ -33,7 +33,7 @@ def random_plate_number(multiline):
     if multiline:
         text += "\n"
     elif random.randint(0, 9) > 3:
-        text += "  "
+        text += " "
     else:
         text += "-"
     for i in range(0, random.randint(1, 2)):
@@ -68,7 +68,7 @@ def create_plates(N):
     for i in range(0, N):
         is_multiline = random.randint(0, 1)
         H = 50
-        W = 70 if is_multiline else 140
+        W = 80 if is_multiline else 160
         font = ImageFont.truetype("generate/EuroPlate.ttf", 20)
 
         # Create image with random light background color of size (W, H)
@@ -77,6 +77,7 @@ def create_plates(N):
 
         # Create a random plate number according to German syntax and put it in the center of image (can be 1 or 2liner)
         text = random_plate_number(is_multiline)
+        text = " ".join(text)
         _, _, w, h = d.textbbox((0, 0), text, font=font)
         d.multiline_text(((W - w) / 2 - min((W - w) / 2 - 5, random.randint(0, 15)), (H - h) / 2), text, font=font,
                          fill=(0, 0, 0), align="center")
@@ -112,3 +113,5 @@ def create_plates(N):
 
         img.save("database/plates/" + re.sub(r"[\n\t\s]*", "", text) + ".png")
         mask.save("database/masks/" + re.sub(r"[\n\t\s]*", "", text) + ".png")
+
+create_plates(10)
