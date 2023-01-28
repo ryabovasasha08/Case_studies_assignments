@@ -5,6 +5,7 @@ import cv2
 import re
 import os
 import numpy as np
+from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import string
 import random
@@ -27,6 +28,7 @@ def get_center(rect):
 
 def split_in_two_lines(rects, deviation):
     while True:
+        random.seed(datetime.now().timestamp())
         first_line_rect_indices = random.sample(range(len(rects)), 2)
         line_1_rects = [rects[first_line_rect_indices[0]], rects[first_line_rect_indices[1]]]
         line_2_rects = []
@@ -89,20 +91,18 @@ def get_square_segment(x, y, w, h, alpha, size, gray, i):
     # directly warp the rotated rectangle to get the straightened rectangle
     warped = cv2.warpPerspective(gray, M, (int(w), int(h)))
     warped = Image.fromarray(warped, mode="L")
-    warped = ImageOps.expand(warped, border=5, fill='white')
+    # warped = ImageOps.expand(warped, border=5, fill='white')
     warped = warped.resize((size - 5, size))
     warped = np.array(warped)
 
     # cv2.imshow("warped"+str(i), warped)
     # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
-    otsu_threshold, output = cv2.threshold(np.uint8(warped), 0, 255, cv2.THRESH_OTSU)
-    output = output
-    return output
+    return warped
 
 
-def detect_lp(gray, model, text):
-
+def detect_lp(gray, text):
     # Try dilation-erosion to make bigger whitespaces between letters - didn't work
     # kernel = np.ones((2, 2), np.uint8)
     # Using cv2.dilate() method
@@ -172,7 +172,8 @@ def detect_lp(gray, model, text):
     ''' Convert all the segments in the separate images of the correct size (15*20 - same as chars in database)'''
     img_list = [get_square_segment(x, y, w, h, alpha, 20, gray, i) for i, [x, y, w, h, alpha] in
                 enumerate(bounding_rects)]
-    predicted_text = convert_to_text(model, img_list)
+
+    predicted_text = convert_to_text(img_list)
 
     '''If the bounding rectangle is too wide and short- it is probably a dash'''
     for i, [x, y, w, h, alpha] in enumerate(bounding_rects):
@@ -193,16 +194,16 @@ def detect_lp(gray, model, text):
 
 # Number of plates (right now in 'plates' folder there's 7k images
 N = 100
-# generate_characters(100)
+# generate_characters(1)
 # create_plates(N)  # to generate a folder 'plates' with N images and masks with N images
-model = create_and_train_model()
+# model = create_and_train_model()
 
 images_dict = load_bw_images_dict_from_folder("database/plates")
 images = list(images_dict.values())
 images_platenames = list(images_dict.keys())
 
 for i, image in enumerate(images):
-    cv2.imshow(images_platenames[i], detect_lp(image, model, images_platenames[i]))
+    cv2.imshow(images_platenames[i], detect_lp(image, images_platenames[i]))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     if i > 10:
