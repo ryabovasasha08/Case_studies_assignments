@@ -114,4 +114,4 @@ def create_plates(N):
         img.save("database/plates/" + re.sub(r"[\n\t\s]*", "", text) + ".png")
         mask.save("database/masks/" + re.sub(r"[\n\t\s]*", "", text) + ".png")
 
-create_plates(10)
+# create_plates(10)

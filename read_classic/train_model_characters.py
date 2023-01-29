@@ -35,37 +35,38 @@ def similarity_with_character(label, label_weight, db_images, image):
         avg_ssim += ssim(db_image, image)
     avg_mse /= N
     avg_ssim /= N
-    return avg_mse , avg_ssim
+    return avg_mse - label_weight, avg_ssim + label_weight
+
 
 def get_character_weight(character):
     character_weights_dict = {
-        # "A":2,
-        # "B":3,
-        # "C":1,
-        # "D":3,
-        # "E":4,
-        # "F":3,
-        # "G": 2,
-        # "H": 1,
-        # "I": 1,
-        # "J": 2,
-        # "K": 3,
-        # "L": 2,
-        # "M":4,
-        # "N":2,
-        # "O":3,
-        # "P":3,
-        # "Q":3,
-        # "R":4,
-        # "S": 2,
-        # "T": 2,
-        # "U": 1,
-        # "V": 1,
-        # "W": 2,
-        # "X": 2,
-        # "Y": 1,
-        # "Z": 4,
-        # "-": 1,
+        "A":2,
+        "B":3,
+        "C":1,
+        "D":3,
+        "E":4,
+        "F":3,
+        "G": 2,
+        "H": 1,
+        "I": 1,
+        "J": 2,
+        "K": 3,
+        "L": 2,
+        "M":4,
+        "N":2,
+        "O":3,
+        "P":3,
+        "Q":3,
+        "R":4,
+        "S": 2,
+        "T": 2,
+        "U": 1,
+        "V": 1,
+        "W": 2,
+        "X": 2,
+        "Y": 1,
+        "Z": 4,
+        "-": 1,
         "1": 2,
         "2": 3,
         "3": 2,
@@ -79,10 +80,12 @@ def get_character_weight(character):
     }
     return character_weights_dict[str(character)]
 
+
 def create_and_train_model():
     chars_dict = load_bw_images_dict_from_folder("database/characters")
     chars_dict_values = np.reshape(list(chars_dict.values()), (len(chars_dict), 15, 20))
-    features = np.reshape(list(chars_dict.values()), (len(chars_dict), 15 * 20)) # [extract_features(img) for img in chars_dict_values]
+    features = np.reshape(list(chars_dict.values()),
+                          (len(chars_dict), 15 * 20))  # [extract_features(img) for img in chars_dict_values]
 
     labels_keys = list(chars_dict.keys())
     labels = []
@@ -102,11 +105,11 @@ def create_and_train_model():
 def convert_to_text(img_list):
     img_list = np.reshape(img_list, (len(img_list), 15, 20))
     # Try pixel values as features instead of hog
-    test_features = img_list # [extract_features(img) for img in img_list]
+    test_features = img_list  # [extract_features(img) for img in img_list]
 
     chars_dict = load_bw_images_dict_from_folder("database/characters")
     chars_dict_values = np.reshape(list(chars_dict.values()), (len(chars_dict), 15, 20))
-    chars_features = chars_dict_values #[extract_features(img) for img in chars_dict_values]
+    chars_features = chars_dict_values  # [extract_features(img) for img in chars_dict_values]
 
     labels_keys = list(chars_dict.keys())
     labels = []
@@ -114,11 +117,11 @@ def convert_to_text(img_list):
     for i, item in enumerate(labels_keys):
         if item[0] == "A" and item[1] == "A":
             if "-" not in labelled_chars:
-                labelled_chars["-"]=[]
+                labelled_chars["-"] = []
             labelled_chars["-"].append(chars_features[i])
         else:
             if item[0] not in labelled_chars:
-                labelled_chars[item[0]]=[]
+                labelled_chars[item[0]] = []
             labelled_chars[item[0]].append(chars_features[i])
 
     predicted_text = []
@@ -135,7 +138,7 @@ def convert_to_text(img_list):
         for char in chars_by_weight:
             labelled_chars_images = labelled_chars[char]
             mse, ssim = similarity_with_character(char, get_character_weight(char), labelled_chars_images, img)
-            if (mse <= min_mse) #and (ssim >= max_ssim):
+            if mse <= min_mse:  # and (ssim >= max_ssim):
                 min_mse = mse
                 max_ssim = ssim
                 predicted_char = char

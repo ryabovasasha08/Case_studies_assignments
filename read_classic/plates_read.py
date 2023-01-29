@@ -22,6 +22,7 @@ from utils import load_bw_images_dict_from_folder
 
 '''--------------READ THE PLATES----------------'''
 
+
 def get_center(rect):
     return (rect[0] + rect[2] / 2, rect[1] + rect[3] / 2)
 
@@ -80,9 +81,20 @@ def get_box_points(x, y, w, h, alpha):
 
 # Get a segment of size (15, 20) - the same size as characters in database
 def get_square_segment(x, y, w, h, alpha, size, gray, i):
-    # the order of the box points: bottom left, top left, top right, bottom right
     box = get_box_points(x, y, w, h, alpha)
     box = np.int0(box)
+    print(box)
+    # the order of the box points: first the lowest one, and then clockwise from there.
+    # So it can be: bottom left, top left, top right, bottom right
+    # Or it can be: bottom right, bottom left, top left, top right
+    # Check which case is that now:
+    print(alpha)
+    if alpha >= 45:
+        last_box_point = box[3].copy()
+        box[3] = box[2]
+        box[2] = box[1]
+        box[1] = box[0]
+        box[0] = last_box_point
     src_pts = box.astype("float32")
     # coordinate of the points in box points after the rectangle has been straightened
     dst_pts = np.array([[0, h - 1], [0, 0], [w - 1, 0], [w - 1, h - 1]], dtype="float32")
@@ -95,9 +107,9 @@ def get_square_segment(x, y, w, h, alpha, size, gray, i):
     warped = warped.resize((size - 5, size))
     warped = np.array(warped)
 
-    # cv2.imshow("warped"+str(i), warped)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    cv2.imshow("warped" + str(i), warped)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     return warped
 
