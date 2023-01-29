@@ -24,6 +24,9 @@ def mse(imageA, imageB):
 
 # label_weight defines, how rare is the character. The higher weight - the more complicated or rare is character.
 # For example, weight of I is 1, weight of P, L - 2, weight of R, F - 3
+'''Come up with better way to add weights into formula'''
+
+
 def similarity_with_character(label, label_weight, db_images, image):
     # varies in [0, inf], where 0 is perfectly same images
     avg_mse = 0
@@ -40,24 +43,24 @@ def similarity_with_character(label, label_weight, db_images, image):
 
 def get_character_weight(character):
     character_weights_dict = {
-        "A":2,
-        "B":3,
-        "C":1,
-        "D":3,
-        "E":4,
-        "F":3,
+        "A": 2,
+        "B": 3,
+        "C": 1,
+        "D": 3,
+        "E": 4,
+        "F": 3,
         "G": 2,
         "H": 1,
         "I": 1,
         "J": 2,
         "K": 3,
         "L": 2,
-        "M":4,
-        "N":2,
-        "O":3,
-        "P":3,
-        "Q":3,
-        "R":4,
+        "M": 4,
+        "N": 2,
+        "O": 3,
+        "P": 3,
+        "Q": 3,
+        "R": 4,
         "S": 2,
         "T": 2,
         "U": 1,
@@ -138,7 +141,7 @@ def convert_to_text(img_list):
         for char in chars_by_weight:
             labelled_chars_images = labelled_chars[char]
             mse, ssim = similarity_with_character(char, get_character_weight(char), labelled_chars_images, img)
-            if mse <= min_mse:  # and (ssim >= max_ssim):
+            if mse <= min_mse and (ssim >= max_ssim):
                 min_mse = mse
                 max_ssim = ssim
                 predicted_char = char
