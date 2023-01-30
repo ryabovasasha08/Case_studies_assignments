@@ -6,6 +6,7 @@ import numpy as np
 from skimage.feature import hog
 from utils import load_bw_images_dict_from_folder
 from skimage.metrics import structural_similarity as ssim
+import random
 
 
 def extract_features(img):
@@ -29,16 +30,14 @@ def mse(imageA, imageB):
 
 def similarity_with_character(label, label_weight, db_images, image):
     # varies in [0, inf], where 0 is perfectly same images
-    avg_mse = 0
+    min_mse = 10000000
     # varies in [-1, 1], where 1 is perfectly same images
-    avg_ssim = 0
+    max_ssim = 0
     N = len(db_images)
     for db_image in db_images:
-        avg_mse += mse(db_image, image)
-        avg_ssim += ssim(db_image, image)
-    avg_mse /= N
-    avg_ssim /= N
-    return avg_mse - label_weight, avg_ssim + label_weight
+        min_mse = min(min_mse, mse(db_image, image))
+        max_ssim = max(max_ssim, ssim(db_image, image))
+    return min_mse, max_ssim
 
 
 def get_character_weight(character):
@@ -128,7 +127,7 @@ def convert_to_text(img_list):
             labelled_chars[item[0]].append(chars_features[i])
 
     predicted_text = []
-    for img in img_list:
+    for i, img in enumerate(img_list):
         # cv2.imshow("1", np.uint8(img))
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
@@ -136,9 +135,14 @@ def convert_to_text(img_list):
         predicted_char = ""
         min_mse = 100000
         max_ssim = -1
-        labelled_chars_items = labelled_chars.items()
-        chars_by_weight = sorted(list(labelled_chars.keys()), key=lambda x: get_character_weight(x))
-        for char in chars_by_weight:
+        chars_to_check = list(labelled_chars.keys())
+        if i == 0:
+            chars_to_check = [char for char in chars_to_check if not char.isdigit()]
+            chars_to_check.remove("-")
+        if i == len(img_list) - 1:
+            chars_to_check = [char for char in chars_to_check if char.isdigit()]
+
+        for char in chars_to_check:
             labelled_chars_images = labelled_chars[char]
             mse, ssim = similarity_with_character(char, get_character_weight(char), labelled_chars_images, img)
             if mse <= min_mse and (ssim >= max_ssim):
