@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 import string
 import random
 import os
+import numpy as np
 
 
 def generate_characters(num_samples_per_character):
@@ -20,8 +21,21 @@ def generate_characters(num_samples_per_character):
 
             _, _, w, h = d.textbbox((0, 0), str(num), font=font)
 
-            d.text(((W - w) / 2, (H - h) / 2), str(num), font=font, fill=(0, 0, 0), align="center")
-            # img = img.rotate(random.randint(-10, 10), expand=True, fillcolor=(255, 255, 255))
+            d.text(((W - w) / 2, (H - h) / 2), str(num), font=font, fill=(0, 0, 0),
+                   align="center")
+
+            top_padding = random.randint(0, 1)
+            left_padding = random.randint(0, 1)
+            right_padding = random.randint(0, 1)
+            bottom_padding = random.randint(0, 1)
+
+            img = np.array(img)
+            img = img[top_padding:h - top_padding - bottom_padding, left_padding:w - left_padding - right_padding]
+            img = Image.fromarray(img)
+
+            img = img.rotate(random.randint(-45, 45), expand=True, fillcolor=(255, 255, 255))
+
+
             img = img.resize((15, 20))
 
             name = str(num) + "_" + str(i) + ".png"
@@ -37,7 +51,18 @@ def generate_characters(num_samples_per_character):
         font = ImageFont.truetype("generate/EuroPlate.ttf", fontsize)
         _, _, w, h = d.textbbox((0, 0), "-", font=font)
         d.text(((W - w) / 2, (H - h) / 2), "-", font=font, fill=(0, 0, 0), align="center")
-        # img = img.rotate(random.randint(-10, 10), expand=True, fillcolor=(255, 255, 255))
+
+        top_padding = random.randint(0, 1)
+        left_padding = random.randint(0, 1)
+        right_padding = random.randint(0, 1)
+        bottom_padding = random.randint(0, 1)
+
+        img = np.array(img)
+        img = img[top_padding:h - top_padding - bottom_padding, left_padding:w - left_padding - right_padding]
+        img = Image.fromarray(img)
+
+        img = img.rotate(random.randint(-45, 45), expand=True, fillcolor=(255, 255, 255))
+
         img = img.resize((15, 20))
 
         name = "AA" + "_" + str(i) + ".png"
@@ -54,7 +79,18 @@ def generate_characters(num_samples_per_character):
             font = ImageFont.truetype("generate/EuroPlate.ttf", fontsize)
 
             d.text(((W - w) / 2, (H - h) / 2), let, font=font, fill=(0, 0, 0), align="center")
-            # img = img.rotate(random.randint(-10, 10), expand=True, fillcolor=(255, 255, 255))
+
+            top_padding = random.randint(0, 1)
+            left_padding = random.randint(0, 1)
+            right_padding = random.randint(0, 1)
+            bottom_padding = random.randint(0, 1)
+
+            img = np.array(img)
+            img = img[top_padding:h - top_padding - bottom_padding, left_padding:w - left_padding - right_padding]
+            img = Image.fromarray(img)
+
+            img = img.rotate(random.randint(-45, 45), expand=True, fillcolor=(255, 255, 255))
+
             img = img.resize((15, 20))
 
             name = let + "_" + str(i) + ".png"
