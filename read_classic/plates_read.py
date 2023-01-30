@@ -28,51 +28,56 @@ def get_center(rect):
 
 
 def split_in_two_lines(rects, deviation):
-    while True:
-        random.seed(datetime.now().timestamp())
-        first_line_rect_indices = random.sample(range(len(rects)), 2)
-        line_1_rects = [rects[first_line_rect_indices[0]], rects[first_line_rect_indices[1]]]
-        line_2_rects = []
+    for first_line_first_index in range(0, len(rects)):
+        for first_line_second_index in range(0, len(rects)):
+            if first_line_first_index != first_line_second_index:
+                first_line_rect_indices = [first_line_first_index, first_line_second_index]
+                line_1_rects = [rects[first_line_rect_indices[0]], rects[first_line_rect_indices[1]]]
+                second_line_rect_indices = []
+                line_2_rects = []
 
-        point1 = get_center(line_1_rects[0])
-        point2 = get_center(line_1_rects[1])
-        eps = 10 ^ (-5)
+                point1 = get_center(line_1_rects[0])
+                point2 = get_center(line_1_rects[1])
+                eps = 10 ^ (-5)
 
-        line_1_m = (point2[1] - point1[1]) / (point2[0] - point1[0] + eps)
-        line_1_b = point1[1] - (line_1_m * point1[0])
-        line_2_m = 0
-        line_2_b = 0
+                line_1_m = (point2[1] - point1[1]) / (point2[0] - point1[0] + eps)
+                line_1_b = point1[1] - (line_1_m * point1[0])
+                line_2_m = 0
+                line_2_b = 0
 
-        are_two_parallel_lines = True
+                are_two_parallel_lines = True
 
-        for i in range(1, len(rects)):
-            center = get_center(rects[i])
+                for i in range(0, len(rects)):
+                    center = get_center(rects[i])
 
-            if i == first_line_rect_indices[0] or i == first_line_rect_indices[1]:
-                continue
-            else:
-                line_1_y = line_1_m * center[0] + line_1_b
-                line_2_y = line_2_m * center[0] + line_2_b
-
-                if abs(center[1] - line_1_y) < deviation:
-                    line_1_rects.append(rects[i])
-                elif len(line_2_rects) >= 1:
-                    if abs(center[1] - line_2_y) < deviation:
-                        line_2_rects.append(rects[i])
+                    if i in first_line_rect_indices or i in second_line_rect_indices:
+                        continue
                     else:
-                        are_two_parallel_lines = False
-                        break
-                else:
-                    line_2_rects.append(rects[i])
-                    point = get_center(line_2_rects[0])
-                    line_2_m = line_1_m
-                    line_2_b = point[1] - (line_2_m * point[0])
+                        line_1_y = line_1_m * center[0] + line_1_b
+                        line_2_y = line_2_m * center[0] + line_2_b
 
-        if are_two_parallel_lines:
-            if line_1_b < line_2_b:
-                return line_1_rects, line_2_rects
-            else:
-                return line_2_rects, line_1_rects
+                        if abs(center[1] - line_1_y) < deviation:
+                            line_1_rects.append(rects[i])
+                            first_line_rect_indices.append(i)
+                        elif len(line_2_rects) > 1:
+                            if abs(center[1] - line_2_y) < deviation:
+                                line_2_rects.append(rects[i])
+                                second_line_rect_indices.append(i)
+                            else:
+                                are_two_parallel_lines = False
+                                break
+                        else:
+                            line_2_rects.append(rects[i])
+                            second_line_rect_indices.append(i)
+                            point = get_center(line_2_rects[0])
+                            line_2_m = line_1_m
+                            line_2_b = point[1] - (line_2_m * point[0])
+
+                if are_two_parallel_lines:
+                    if line_1_b < line_2_b:
+                        return line_1_rects, line_2_rects
+                    else:
+                        return line_2_rects, line_1_rects
 
 
 def get_box_points(x, y, w, h, alpha):
