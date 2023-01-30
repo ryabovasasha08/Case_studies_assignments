@@ -98,7 +98,7 @@ def create_plates(N):
 
         # Rotate and pad the license plate by random padding with random background but output images have same size
         background = random_color()
-        rotate_angle = random.randint(-30, 30)
+        rotate_angle = random.randint(-20, 20)
         border = random.randint(1, 15)
         img = img.rotate(rotate_angle, expand=True, fillcolor=background)
         img = ImageOps.expand(img, border=border, fill=background)
