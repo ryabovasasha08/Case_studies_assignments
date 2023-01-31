@@ -77,6 +77,7 @@ for i in range(0,len(masks_raw)):
     plates.append(plate)
 
     mask = cv2.resize(masks_raw[i], dsize=(128, 128), interpolation=cv2.INTER_NEAREST)
+    mask = mask/255
     masks.append(mask)
 
 # To check the mask and plate eye test:
