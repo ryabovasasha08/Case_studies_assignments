@@ -10,21 +10,6 @@ from sklearn.model_selection import train_test_split
 
 ORIGINAL_IMG_SIZE = 256
 
-
-class DisplayCallback(tf.keras.callbacks.Callback):
-    def on_epoch_end(self, epoch, logs=None):
-        if epoch % 5 == 0:
-            label = "Sample Prediction after epoch " + str(epoch)
-            show_predictions(label=label)
-
-
-# this will be needed for pretty pic of the model for presentation/report
-def plot_model(model):
-    tf.keras.utils.plot_model(model, to_file="unet_model.png", show_shapes=True, show_dtype=False,
-                              show_layer_names=True, rankdir="TB", expand_nested=False,
-                              dpi=96, layer_range=None, show_layer_activations=True, )
-
-
 def create_mask(pred_mask):
     pred_mask = tf.argmax(pred_mask, axis=-1)
     pred_mask = pred_mask[..., tf.newaxis]
