@@ -57,7 +57,7 @@ def display(display_list, label=""):
         plt.title(title[i])
         plt.imshow(tf.keras.utils.array_to_img(display_list[i]))
         plt.axis('off')
-    plt.show(block=False)
+    plt.show()
 
 
 def show_predictions(label="", dataset=None, num=1):
@@ -67,7 +67,7 @@ def show_predictions(label="", dataset=None, num=1):
             display([image[0], mask[0], create_mask(pred_mask)])
     else:
         display([sample_image, sample_mask,
-                        create_mask(model.predict(sample_image[tf.newaxis, ...]))], label)
+                 create_mask(model.predict(sample_image[tf.newaxis, ...]))], label)
 
 
 # If the plates and masks folders are empty or don't contain enough elements, clear them and run this line
@@ -78,12 +78,12 @@ plates_dict = load_images_dict_from_folder("database/plates")
 plates = list(plates_dict.values())
 plates = np.reshape(plates, (len(plates), ORIGINAL_IMG_SIZE, ORIGINAL_IMG_SIZE, 3))
 
-# plates = [tf.image.resize(plate, (IMG_SIZE, IMG_SIZE), method="nearest") for plate in plates] - no need, since images are generated 256*256 now
-
 masks_dict = load_images_dict_from_folder("database/masks")
 masks = list(masks_dict.values())
+
 masks = np.reshape(masks, (len(masks), ORIGINAL_IMG_SIZE, ORIGINAL_IMG_SIZE, 3))
-# masks = [tf.image.resize(mask, (IMG_SIZE, IMG_SIZE), method="nearest") for mask in masks] - no need, since images are generated 256*256
+for i in range(0, len(masks)):
+    masks[i] = np.reshape(masks[i][:, :, 0], (ORIGINAL_IMG_SIZE, ORIGINAL_IMG_SIZE, 1))
 
 # To check the mask and plate eye test:
 # cv2.imshow("Plate", np.uint8(plates[0]))
@@ -93,51 +93,17 @@ masks = np.reshape(masks, (len(masks), ORIGINAL_IMG_SIZE, ORIGINAL_IMG_SIZE, 3))
 
 # Create dataset and split it into train, validation and test + split into batches
 
-test_y = []
-test_x = []
-train_x = []
-train_y = []
+tf_dataset = tf.data.Dataset.from_tensor_slices({'plate': plates, 'mask': masks})
 
-TRAIN_TEST_SPLIT = 0.7
-
-for i in range(0, int(len(plates) * TRAIN_TEST_SPLIT)):
-    train_x.append(plates[i])
-    train_y.append(np.reshape(masks[i][:, :, 0], (ORIGINAL_IMG_SIZE, ORIGINAL_IMG_SIZE, 1)))
-for i in range(int(len(plates) * TRAIN_TEST_SPLIT) + 1, len(plates)):
-    test_x.append(plates[i])
-    test_y.append(np.reshape(masks[i][:, :, 0], (ORIGINAL_IMG_SIZE, ORIGINAL_IMG_SIZE, 1)))
-
-train_dataset = tf.data.Dataset.from_tensor_slices({'plate': train_x, 'mask': train_y})
-test_dataset = tf.data.Dataset.from_tensor_slices({'plate': test_x, 'mask': test_y})
-
-train_images = train_dataset.map(load_image, num_parallel_calls=tf.data.AUTOTUNE)
-test_images = test_dataset.map(load_image, num_parallel_calls=tf.data.AUTOTUNE)
+images = tf_dataset.map(load_image, num_parallel_calls=tf.data.AUTOTUNE)
 
 BATCH_SIZE = 64
 BUFFER_SIZE = 1000
-STEPS_PER_EPOCH = len(train_x) // BATCH_SIZE
 
-train_batches = (
-    train_images.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat().prefetch(buffer_size=tf.data.AUTOTUNE))
-test_batches = test_images.batch(BATCH_SIZE)
-
-# check that display works correctly:
-for images, masks in train_batches.take(2):
-    sample_image, sample_mask = images[0], masks[0]
-    display([sample_image, sample_mask])
-
-EPOCHS = 10
-
-model = build_unet_model()
-model.summary()
-model.compile(optimizer="adam", loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=["accuracy"])
-model_history = model.fit(train_batches, epochs=EPOCHS,
-                          steps_per_epoch=STEPS_PER_EPOCH,
-                          validation_data=test_batches,
-                          callbacks=[DisplayCallback()])
-
-model.save("read_nn/unet")
-print("model saved: read_nn/unet")
+batches = images.batch(BATCH_SIZE)
 
 # After you created and trained the model, it will get saved in read_nn/unet, so you can just load it from there instead of re-training it every time:
-# model = tf.keras.models.load_model('read_nn/unet')
+model = tf.keras.models.load_model('read_nn/unet')
+
+#Show predictions for first element of dataset
+show_predictions(dataset=batches, num=1)
