@@ -5,42 +5,67 @@ import cv2
 from keras.layers import Conv2D, Dropout, Conv2DTranspose, concatenate, Input, Rescaling, MaxPooling2D
 from keras import Model
 
-IMG_SIZE = 256
 
-def build_unet_model(img_size):
-    # input layer shape is equal to patch image size
-    inputs = Input(shape=(img_size, img_size, 3))
+def upsample(filters, size, apply_dropout=False):
+    initializer = tf.random_normal_initializer(0., 0.02)
+    result = tf.keras.Sequential()
+    result.add(
+        tf.keras.layers.Conv2DTranspose(filters, size, strides=2,
+                                        padding='same',
+                                        kernel_initializer=initializer,
+                                        use_bias=False))
 
-    # rescale images from (0, 255) to (0, 1)
-    rescale = Rescaling(scale=1. / 255, input_shape=(img_size, img_size, 3))(inputs)
-    previous_block_activation = rescale  # Set aside residual
+    result.add(tf.keras.layers.BatchNormalization())
+    if apply_dropout:
+        result.add(tf.keras.layers.Dropout(0.5))
+    result.add(tf.keras.layers.ReLU())
 
-    contraction = {}
-    # # Contraction path: Blocks 1 through 5 are identical apart from the feature depth
-    for f in [16, 32, 64, 128]:
-        x = Conv2D(f, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(
-            previous_block_activation)
-        x = Dropout(0.1)(x)
-        x = Conv2D(f, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(x)
-        contraction[f'conv{f}'] = x
-        x = MaxPooling2D((2, 2))(x)
-        previous_block_activation = x
+    return result
 
-    c5 = Conv2D(160, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(
-        previous_block_activation)
-    c5 = Dropout(0.2)(c5)
-    c5 = Conv2D(160, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c5)
-    previous_block_activation = c5
 
-    # Expansive path: Second half of the network: upsampling inputs
-    for f in reversed([16, 32, 64, 128]):
-        x = Conv2DTranspose(f, (2, 2), strides=(2, 2), padding='same')(previous_block_activation)
-        x = concatenate([x, contraction[f'conv{f}']])
-        x = Conv2D(f, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(x)
-        x = Dropout(0.2)(x)
-        x = Conv2D(f, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(x)
-        previous_block_activation = x
+# we use fixed size of 128*128*3, output_channels = 2 (pixel is either part of mask or part of background)
+def build_unet_model():
+    base_model = tf.keras.applications.MobileNetV2(input_shape=[128, 128, 3], include_top=False)
 
-    outputs = Conv2D(3, 1, padding="same", activation="softmax")(previous_block_activation)
+    # Use the activations of these layers
+    layer_names = [
+        'block_1_expand_relu',  # 64x64
+        'block_3_expand_relu',  # 32x32
+        'block_6_expand_relu',  # 16x16
+        'block_13_expand_relu',  # 8x8
+        'block_16_project',  # 4x4
+    ]
 
-    return Model(inputs=inputs, outputs=outputs)
+    base_model_outputs = [base_model.get_layer(name).output for name in layer_names]
+
+    # Create the feature extraction model
+    down_stack = tf.keras.Model(inputs=base_model.input, outputs=base_model_outputs)
+
+    down_stack.trainable = False
+
+    up_stack = [
+        upsample(512, 3),  # 4x4 -> 8x8
+        upsample(256, 3),  # 8x8 -> 16x16
+        upsample(128, 3),  # 16x16 -> 32x32
+        upsample(64, 3),  # 32x32 -> 64x64
+    ]
+
+    inputs = tf.keras.layers.Input(shape=[128, 128, 3])
+
+    # Downsampling through the model
+    skips = down_stack(inputs)
+    x = skips[-1]
+    skips = reversed(skips[:-1])
+
+    # Upsampling and establishing the skip connections
+    for up, skip in zip(up_stack, skips):
+        x = up(x)
+        concat = tf.keras.layers.Concatenate()
+        x = concat([x, skip])
+
+    # This is the last layer of the model
+    last = tf.keras.layers.Conv2DTranspose(filters=3, kernel_size=3, strides=2, padding='same')  # 64x64 -> 128x128
+
+    x = last(x)
+
+    return tf.keras.Model(inputs=inputs, outputs=x)
