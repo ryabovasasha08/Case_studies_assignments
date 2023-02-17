@@ -23,7 +23,7 @@ def normalize(input_image, input_mask):
 
 
 def load_image(datapoint):
-    input_image = tf.image.resize(datapoint['plate'], (128, 128))
+    input_image = tf.image.resize(datapoint['plate'], (75, 128))
     input_mask = tf.image.resize(datapoint['mask'], (128, 128), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     input_image, input_mask = normalize(input_image, input_mask)
 

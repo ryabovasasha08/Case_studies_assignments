@@ -80,16 +80,16 @@ def generate_characters(num_samples_per_character):
 
             d.text(((W - w) / 2, (H - h) / 2), let, font=font, fill=(0, 0, 0), align="center")
 
-            top_padding = random.randint(0, 1)
-            left_padding = random.randint(0, 1)
-            right_padding = random.randint(0, 1)
-            bottom_padding = random.randint(0, 1)
+            top_padding = random.randint(0, 2)
+            left_padding = random.randint(0, 2)
+            right_padding = random.randint(0, 2)
+            bottom_padding = random.randint(0, 2)
 
             img = np.array(img)
             img = img[top_padding:h - top_padding - bottom_padding, left_padding:w - left_padding - right_padding]
             img = Image.fromarray(img)
 
-            img = img.rotate(random.randint(-45, 45), expand=True, fillcolor=(255, 255, 255))
+            img = img.rotate(random.randint(-90, 90), expand=True, fillcolor=(255, 255, 255))
 
             img = img.resize((15, 20))
 

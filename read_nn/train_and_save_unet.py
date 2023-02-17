@@ -4,6 +4,7 @@ from generate.plates_generate import create_plates
 from utils import load_images_dict_from_folder, load_bw_images_dict_from_folder
 import cv2
 import matplotlib.pyplot as plt
+import pandas as pd
 from PIL import Image
 from unet_model import build_unet_model
 from sklearn.model_selection import train_test_split
