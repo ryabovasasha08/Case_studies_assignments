@@ -183,7 +183,7 @@ plt.title("Frequency of misinterpreting symbols")
 # print(image.size())
 # image = Variable(image)
 # print(image.size())
- 
+
 
 # +
 #     model.eval()
